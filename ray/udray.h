@@ -20,7 +20,7 @@
 
 using namespace std;
 
-#include <glut.h>
+#include <gl/glut.h>
 
 #include "glm.h"
 
