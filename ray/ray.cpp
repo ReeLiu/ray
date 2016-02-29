@@ -75,8 +75,37 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 Intersection *intersect_ray_sphere(Ray *ray, Sphere *S)
 {
 	// FILL IN CODE (line below says "no" for all spheres, so replace it)
+	Vect deltP;
+	double t, deter, dotP_dir_deltP;
+	Intersection* inter;
 
-	return NULL;
+	VectSub(S->P, ray->orig, deltP);
+	dotP_dir_deltP = VectDotProd(ray->dir, deltP);
+
+	Vect tmp;
+	VectAddS(-1.0f * dotP_dir_deltP, ray->dir, deltP, tmp);
+	deter = SQUARE(S->radius) - SQUARE(tmp[X]) - SQUARE(tmp[Y]) - SQUARE(tmp[Z]);
+
+	if (deter < 0.0f)
+		return NULL;
+	
+	else
+	{
+		deter = sqrt(deter);
+		if (dotP_dir_deltP + deter < 0.0f)
+			return NULL;
+
+		else
+		{
+			inter = make_intersection();
+			inter->t = (dotP_dir_deltP - deter) <= 0.0f ? (dotP_dir_deltP + deter) : (dotP_dir_deltP - deter);
+			VectAddS(inter->t, ray->dir, ray->orig, inter->P);
+			inter->surf = S->surf;
+			VectSub(inter->P, S->P, inter->N);
+			VectUnit(inter->N);
+			return inter;
+		}
+	}
 }
 
 //----------------------------------------------------------------------------
