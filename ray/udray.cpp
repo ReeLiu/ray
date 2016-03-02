@@ -234,9 +234,6 @@ void raytrace_one_pixel(int i, int j)
 	trace_ray(0, 1.0, eye_ray, eye_color);
 
 	draw_point(i, j, eye_color, ray_cam->im);
-
-	//Vect eye_color;
-	//trace_ray(0, 1.0, i, j, );
 }
 
 //----------------------------------------------------------------------------
@@ -269,10 +266,6 @@ void set_pixel_ray_direction(double x, double y, Camera *cam, Ray *ray)
 
 	//  printf("unit %lf %lf -> %lf %lf %lf\n\n", x, y, ray->dir[X], ray->dir[Y], ray->dir[Z]);
 
-}
-
-void set_pixel_ray_position(int i, int j, Camera* cam, Ray* ray)
-{
 }
 
 //----------------------------------------------------------------------------
@@ -365,67 +358,6 @@ Intersection *intersect_ray_triangle(Ray *ray, Vect V0, Vect V1, Vect V2)
 	inter->t = t;
 
 	return inter;
-
-	//Vect    u, v, n;        // triangle vectors
-	//Vect    w0, w;          // ray vectors
-	//float   a, b;           // params to calc ray-plane intersect
-	//float t;
-	//Vect I;
-	//Intersection *inter;
-
-	//// get triangle edge vectors and plane normal
-
-	//VectSub(V1, V0, u);
-	//VectSub(V2, V0, v);
-	//VectCross(u, v, n);  
-	//if (n[X] == 0 && n[Y] == 0 && n[Z] == 0)            // triangle is degenerate; do not deal with this case
-	//	return NULL;               
-
-	//VectSub(ray->orig, V0, w0);
-	//a = -VectDotProd(n,w0);
-	//b = VectDotProd(n,ray->dir);
-
-	//if (fabs(b) < SMALL_NUM) {     // ray is parallel to triangle plane
-	//	if (a == 0)                  // case 1: ray lies in triangle plane
-	//		return NULL;
-	//	else return NULL;               // case 2: ray disjoint from plane
-	//}
-
-	//// get intersect point of ray with triangle plane
-
-	//t = a / b;
-	//if (t < rayeps)                   // triangle is behind/too close to ray => no intersect
-	//	return NULL;                 // for a segment, also test if (t > 1.0) => no intersect
-
-	//// intersect point of ray and plane
-
-	//VectAddS(t, ray->dir, ray->orig, I);        
-
-	//// is I inside T?
-
-	//float    uu, uv, vv, wu, wv, D;
-	//uu = VectDotProd(u,u);
-	//uv = VectDotProd(u,v);
-	//vv = VectDotProd(v,v);
-	//VectSub(I, V0, w);
-	//wu = VectDotProd(w,u);
-	//wv = VectDotProd(w,v);
-	//D = uv * uv - uu * vv;
-
-	//// get and test parametric (i.e., barycentric) coords
-
-	//float p, q;  // were s, t in original code
-	//p = (uv * wv - vv * wu) / D;
-	//if (p < 0.0 || p > 1.0)        // I is outside T
-	//	return NULL;
-	//q = (uv * wu - uu * wv) / D;
-	//if (q < 0.0 || (p + q) > 1.0)  // I is outside T
-	//	return NULL;
-
-	//inter = make_intersection();
-	//inter->t = t;
-	//VectCopy(inter->P, I);
-	//return inter;                      // I is in T
 }
 
 //----------------------------------------------------------------------------

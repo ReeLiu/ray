@@ -11,8 +11,8 @@ extern Camera *ray_cam;       // camera info
 extern int image_i, image_j;  // current pixel being shaded
 extern bool wrote_image;      // has the last pixel been shaded?
 
-extern double dptMin = 0.0f;		// minimum deepth
-extern double dptMax = 0.0f;		// maximum deepth
+extern double dptMin = 0.0f;		// minimum depth
+extern double dptMax = 0.0f;		// maximum depth
 extern bool firstIntersect = false;
 extern double* dptImage = nullptr;
 
@@ -74,7 +74,7 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 		shade_ray_diffuse(ray, nearest_inter, color);
 		//   shade_ray_recursive(level, weight, ray, nearest_inter, color);
 
-		// record deepth information
+		// record depth information
 		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
 		if (nearest_inter->t < dptMin)
 			dptMin = nearest_inter->t;
@@ -87,8 +87,9 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 	else
 	{
 		shade_ray_background(ray, color);
+
+		// record depth information
 		dptImage[image_i + image_j*ray_cam->im->w] = MAXDEPTH;
-		// record deepth information
 	}
 }
 
@@ -155,10 +156,7 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 
 		// FILL IN CODE
 
-	}
-
-	// record deepth information
-	
+	}	
 
 	// clamp color to [0, 1]
 
@@ -302,7 +300,7 @@ int main(int argc, char** argv)
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(ray_cam->im->w, ray_cam->im->h);
 
-	// init deepth image
+	// init depth image
 	dptImage = (double*)calloc(ray_cam->im->w * ray_cam->im->h, sizeof(double));
 
 	glutInitWindowPosition(500, 300);
