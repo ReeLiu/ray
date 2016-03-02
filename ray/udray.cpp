@@ -234,6 +234,9 @@ void raytrace_one_pixel(int i, int j)
 	trace_ray(0, 1.0, eye_ray, eye_color);
 
 	draw_point(i, j, eye_color, ray_cam->im);
+
+	//Vect eye_color;
+	//trace_ray(0, 1.0, i, j, );
 }
 
 //----------------------------------------------------------------------------
@@ -266,6 +269,10 @@ void set_pixel_ray_direction(double x, double y, Camera *cam, Ray *ray)
 
 	//  printf("unit %lf %lf -> %lf %lf %lf\n\n", x, y, ray->dir[X], ray->dir[Y], ray->dir[Z]);
 
+}
+
+void set_pixel_ray_position(int i, int j, Camera* cam, Ray* ray)
+{
 }
 
 //----------------------------------------------------------------------------
@@ -739,7 +746,6 @@ void parse_scene_file(char *filename, Camera *cam)
 
 	fscanf(fp, "image %i %i\n", &w, &h);
 	cam->im = make_image(w, h);
-
 	// objects and lights
 
 	model_list.clear();
@@ -931,6 +937,21 @@ void write_PPM(char *filename, Image *im)
 			(int) my_round(255*im->data[t+2]));
 
 	// finish up
+
+	fclose(fp);
+}
+
+void write_DPT(char* filename, double* dptInfo, int w, int h)
+{
+	FILE* fp = fopen(filename, "wb");
+
+	fprintf(fp, "w: %i, h: %i", w, h);
+	for (int j = 0; j < h; j++)
+	{
+		fprintf(fp, "\n");
+		for (int i = 0; i < w; i++)
+			fprintf(fp, "%-3.3d\t", (int)dptInfo[i+j*w]);
+	}
 
 	fclose(fp);
 }

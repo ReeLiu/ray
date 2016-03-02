@@ -11,6 +11,11 @@ extern Camera *ray_cam;       // camera info
 extern int image_i, image_j;  // current pixel being shaded
 extern bool wrote_image;      // has the last pixel been shaded?
 
+extern double dptMin = 0.0f;		// minimum deepth
+extern double dptMax = 0.0f;		// maximum deepth
+extern bool firstIntersect = false;
+extern double* dptImage = nullptr;
+
 // reflection/refraction recursion control
 
 extern int maxlevel;          // maximum depth of ray recursion 
@@ -56,16 +61,35 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 	// another way to render faster is to decrease the image size.
 
 	if (nearest_inter) {
+		
+		// record minimum depth && maximum depth
+		if (!firstIntersect)
+		{
+			dptMin = dptMax = nearest_inter->t;
+			firstIntersect = true;
+		}
+
 		//shade_ray_false_color_normal(nearest_inter, color);
 		//    shade_ray_intersection_mask(color);  
 		shade_ray_diffuse(ray, nearest_inter, color);
 		//   shade_ray_recursive(level, weight, ray, nearest_inter, color);
+
+		// record deepth information
+		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
+		if (nearest_inter->t < dptMin)
+			dptMin = nearest_inter->t;
+		else if (nearest_inter->t > dptMax)
+			dptMax = nearest_inter->t;
 	}
 
 	// color the ray using a default
 
 	else
-		shade_ray_background(ray, color); 
+	{
+		shade_ray_background(ray, color);
+		dptImage[image_i + image_j*ray_cam->im->w] = MAXDEPTH;
+		// record deepth information
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -132,6 +156,9 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 		// FILL IN CODE
 
 	}
+
+	// record deepth information
+	
 
 	// clamp color to [0, 1]
 
@@ -208,6 +235,19 @@ void idle()
 	else if (!wrote_image) {
 
 		write_PPM("output.ppm", ray_cam->im);
+		// write depth image
+		double multiplier = 255.0f / (dptMax - dptMin);
+		double addend = 0.0f - dptMin * multiplier;
+		for (int i = 0; i < ray_cam->im->w * ray_cam->im->h; i++)
+		{
+			if (dptImage[i] != MAXDEPTH)
+			{
+				// normailze to 0 - 255
+				dptImage[i] = dptImage[i] * multiplier + addend;
+			}
+		}
+		
+		write_DPT("depthInfo.bin", dptImage, ray_cam->im->w, ray_cam->im->h);
 
 		wrote_image = true;
 	}
@@ -261,6 +301,10 @@ int main(int argc, char** argv)
 
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(ray_cam->im->w, ray_cam->im->h);
+
+	// init deepth image
+	dptImage = (double*)calloc(ray_cam->im->w * ray_cam->im->h, sizeof(double));
+
 	glutInitWindowPosition(500, 300);
 	glutCreateWindow("hw3");
 	init();
