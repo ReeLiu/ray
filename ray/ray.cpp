@@ -11,6 +11,11 @@ extern Camera *ray_cam;       // camera info
 extern int image_i, image_j;  // current pixel being shaded
 extern bool wrote_image;      // has the last pixel been shaded?
 
+extern double dptMin = 0.0f;		// minimum depth
+extern double dptMax = 0.0f;		// maximum depth
+extern bool firstIntersect = false;
+extern double* dptImage = nullptr;
+
 // reflection/refraction recursion control
 
 extern int maxlevel;          // maximum depth of ray recursion 
@@ -56,16 +61,36 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 	// another way to render faster is to decrease the image size.
 
 	if (nearest_inter) {
+		
+		// record minimum depth && maximum depth
+		if (!firstIntersect)
+		{
+			dptMin = dptMax = nearest_inter->t;
+			firstIntersect = true;
+		}
+
 		//shade_ray_false_color_normal(nearest_inter, color);
 		//    shade_ray_intersection_mask(color);  
 		shade_ray_diffuse(ray, nearest_inter, color);
 		//   shade_ray_recursive(level, weight, ray, nearest_inter, color);
+
+		// record depth information
+		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
+		if (nearest_inter->t < dptMin)
+			dptMin = nearest_inter->t;
+		else if (nearest_inter->t > dptMax)
+			dptMax = nearest_inter->t;
 	}
 
 	// color the ray using a default
 
 	else
-		shade_ray_background(ray, color); 
+	{
+		shade_ray_background(ray, color);
+
+		// record depth information
+		dptImage[image_i + image_j*ray_cam->im->w] = MAXDEPTH;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -75,8 +100,37 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 Intersection *intersect_ray_sphere(Ray *ray, Sphere *S)
 {
 	// FILL IN CODE (line below says "no" for all spheres, so replace it)
+	Vect deltP;
+	double t, deter, dotP_dir_deltP;
+	Intersection* inter;
 
-	return NULL;
+	VectSub(S->P, ray->orig, deltP);
+	dotP_dir_deltP = VectDotProd(ray->dir, deltP);
+
+	Vect tmp;
+	VectAddS(-1.0f * dotP_dir_deltP, ray->dir, deltP, tmp);
+	deter = SQUARE(S->radius) - SQUARE(tmp[X]) - SQUARE(tmp[Y]) - SQUARE(tmp[Z]);
+
+	if (deter < 0.0f)
+		return NULL;
+	
+	else
+	{
+		deter = sqrt(deter);
+		if (dotP_dir_deltP + deter < 0.0f)
+			return NULL;
+
+		else
+		{
+			inter = make_intersection();
+			inter->t = (dotP_dir_deltP - deter) <= 0.0f ? (dotP_dir_deltP + deter) : (dotP_dir_deltP - deter);
+			VectAddS(inter->t, ray->dir, ray->orig, inter->P);
+			inter->surf = S->surf;
+			VectSub(inter->P, S->P, inter->N);
+			VectUnit(inter->N);
+			return inter;
+		}
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -102,7 +156,7 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 
 		// FILL IN CODE
 
-	}
+	}	
 
 	// clamp color to [0, 1]
 
@@ -179,6 +233,19 @@ void idle()
 	else if (!wrote_image) {
 
 		write_PPM("output.ppm", ray_cam->im);
+		// write depth image
+		double multiplier = 255.0f / (dptMax - dptMin);
+		double addend = 0.0f - dptMin * multiplier;
+		for (int i = 0; i < ray_cam->im->w * ray_cam->im->h; i++)
+		{
+			if (dptImage[i] != MAXDEPTH)
+			{
+				// normailze to 0 - 255
+				dptImage[i] = dptImage[i] * multiplier + addend;
+			}
+		}
+		
+		write_DPT("depthInfo.bin", dptImage, ray_cam->im->w, ray_cam->im->h);
 
 		wrote_image = true;
 	}
@@ -232,6 +299,10 @@ int main(int argc, char** argv)
 
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(ray_cam->im->w, ray_cam->im->h);
+
+	// init depth image
+	dptImage = (double*)calloc(ray_cam->im->w * ray_cam->im->h, sizeof(double));
+
 	glutInitWindowPosition(500, 300);
 	glutCreateWindow("hw3");
 	init();
@@ -246,3 +317,11 @@ int main(int argc, char** argv)
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
+
+#define USE_MKL
+
+#ifdef USE_MKL
+// _mm_macc...
+#else
+// 
+#endif // USE_MKL
