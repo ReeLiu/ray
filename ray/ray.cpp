@@ -14,7 +14,7 @@ extern bool wrote_image;      // has the last pixel been shaded?
 extern double dptMin = 0.0f;		// minimum depth
 extern double dptMax = 0.0f;		// maximum depth
 extern bool firstIntersect = false;
-extern double* dptImage = nullptr;
+extern GLfloat* dptImage = nullptr;
 
 // reflection/refraction recursion control
 
@@ -234,15 +234,19 @@ void idle()
 
 		write_PPM("output.ppm", ray_cam->im);
 		// write depth image
-		double multiplier = 255.0f / (dptMax - dptMin);
-		double addend = 0.0f - dptMin * multiplier;
+		double multiplier = (0.0f - 1.0f) / (dptMax - dptMin);
+		double addend = 1.0f - dptMin * multiplier;
 		for (int i = 0; i < ray_cam->im->w * ray_cam->im->h; i++)
 		{
 			if (dptImage[i] != MAXDEPTH)
 			{
-				// normailze to 0 - 255
+				// normailze to 0 - 1.0
 				dptImage[i] = dptImage[i] * multiplier + addend;
 			}
+
+			else
+				dptImage[i] = 0.0f;
+
 		}
 		
 		write_DPT("depthInfo.bin", dptImage, ray_cam->im->w, ray_cam->im->h);
@@ -264,7 +268,11 @@ void display(void)
 	glPixelZoom(1, -1);
 	glRasterPos2i(0, ray_cam->im->h);
 
-	glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_RGBA, GL_FLOAT, ray_cam->im->data);
+	//// display color image
+	//glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_RGBA, GL_FLOAT, ray_cam->im->data);
+	
+	// display depth image
+	glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_LUMINANCE, GL_FLOAT, dptImage);
 
 	glFlush ();
 }
@@ -301,7 +309,7 @@ int main(int argc, char** argv)
 	glutInitWindowSize(ray_cam->im->w, ray_cam->im->h);
 
 	// init depth image
-	dptImage = (double*)calloc(ray_cam->im->w * ray_cam->im->h, sizeof(double));
+	dptImage = (GLfloat*)calloc(ray_cam->im->w * ray_cam->im->h, sizeof(GLfloat));
 
 	glutInitWindowPosition(500, 300);
 	glutCreateWindow("hw3");

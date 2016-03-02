@@ -53,7 +53,7 @@ using namespace std;
 #define NEAR   4
 #define FAR    5
 
-#define MAXDEPTH 255
+#define MAXDEPTH 10000
 
 //----------------------------------------------------------------------------
 // Type and struct definitions
@@ -214,7 +214,7 @@ void VectClamp(Vect, double, double);
 
 void draw_point(int, int, Vect, Image *);
 void write_PPM(char *, Image *);
-void write_DPT(char *, double *, int, int);
+void write_DPT(char *, GLfloat *, int, int);
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

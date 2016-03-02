@@ -873,16 +873,16 @@ void write_PPM(char *filename, Image *im)
 	fclose(fp);
 }
 
-void write_DPT(char* filename, double* dptInfo, int w, int h)
+void write_DPT(char* filename, GLfloat* dptInfo, int w, int h)
 {
-	FILE* fp = fopen(filename, "wb");
+	FILE* fp = fopen(filename, "w");
 
 	fprintf(fp, "w: %i, h: %i", w, h);
 	for (int j = 0; j < h; j++)
 	{
 		fprintf(fp, "\n");
 		for (int i = 0; i < w; i++)
-			fprintf(fp, "%-3.3d\t", (int)dptInfo[i+j*w]);
+			fprintf(fp, "%-f\t", dptInfo[i+j*w]);
 	}
 
 	fclose(fp);
