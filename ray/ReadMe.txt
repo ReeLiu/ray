@@ -31,3 +31,13 @@ AppWizard uses "TODO:" comments to indicate parts of the source code you
 should add to or customize.
 
 /////////////////////////////////////////////////////////////////////////////
+
+Changes:
+
+=> Adding Nuget package for openGL (glm.h, udray.h)
+=> New method to calculate ray intersection with triangles (udray.cpp)
+=> Adding code for calculate ray intersection with sphere (ray.cpp)
+=> Output depth information to depthInfo.bin file (ray.cpp, udray.cpp write_DPT)
+=> File format:
+w : XXX, h: XXX // Image width and height
+XXX XXX XXX .... // depth value, normalized to 0 - 255, 255 for background.
