@@ -38,6 +38,8 @@ Changes:
 => New method to calculate ray intersection with triangles (udray.cpp)
 => Adding code for calculate ray intersection with sphere (ray.cpp)
 => Output depth information to depthInfo.bin file (ray.cpp, udray.cpp write_DPT)
-=> File format:
-w : XXX, h: XXX // Image width and height
-XXX XXX XXX .... // depth value, normalized to 0 - 255, 255 for background.
+	=> File format:
+		w : XXX, h: XXX // Image width and height
+		XXX XXX XXX .... // depth value, normalized to 0 - 255, 255 for background.
+
+=> Adding function to display depth image (ray.cpp)
