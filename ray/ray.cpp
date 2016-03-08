@@ -71,8 +71,8 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 
 		//shade_ray_false_color_normal(nearest_inter, color);
 		//    shade_ray_intersection_mask(color);  
-		shade_ray_diffuse(ray, nearest_inter, color);
-		//   shade_ray_recursive(level, weight, ray, nearest_inter, color);
+		//shade_ray_diffuse(ray, nearest_inter, color);
+		shade_ray_recursive(level, weight, ray, nearest_inter, color);
 
 		// record depth information
 		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
@@ -135,7 +135,7 @@ Intersection *intersect_ray_sphere(Ray *ray, Sphere *S)
 
 //----------------------------------------------------------------------------
 
-// only local, ambient + diffuse lighting (no specular, shadows, reflections, or refractions)
+// only local, ambient + diffuse L (no specular, shadows, reflections, or refractions)
 
 void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 {
@@ -152,24 +152,89 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 		color[G] += inter->surf->amb[G] * light_list[i]->amb[G];
 		color[B] += inter->surf->amb[B] * light_list[i]->amb[B];
 
-		// DIFFUSE 
+		// DIFFUSE
+		Vect lighting;
+		VectSub(light_list[i]->P, inter->P, lighting);
+		VectUnit(lighting);
 
-		// FILL IN CODE
+		double cosin = VectDotProd(inter->N, lighting);
+		if (cosin <= 0.0f)
+		{
+			cosin = 0.0f;
+			continue;
+		}
 
+		color[R] += inter->surf->diff[R] * light_list[i]->diff[R] * cosin;
+		color[G] += inter->surf->diff[G] * light_list[i]->diff[G] * cosin;
+		color[B] += inter->surf->diff[B] * light_list[i]->diff[B] * cosin;
 	}	
 
 	// clamp color to [0, 1]
-
 	VectClamp(color, 0, 1);
 }
 
 //----------------------------------------------------------------------------
 
-// same as shade_ray_diffuse(), but add specular lighting + shadow rays (i.e., full Phong illumination model)
+// same as shade_ray_diffuse(), but add specular L + shadow rays (i.e., full Phong illumination model)
 
 void shade_ray_local(Ray *ray, Intersection *inter, Vect color)
 {
 	// FILL IN CODE 
+	for (int i = 0; i < light_list.size(); i++)
+	{
+		// DIFFUSE
+		Vect L;
+		VectSub(light_list[i]->P, inter->P, L);
+		VectUnit(L);
+
+		double cosin_diff = VectDotProd(inter->N, L);
+		if (cosin_diff <= 0.0f)
+		{
+			cosin_diff = 0.0f;
+		}
+
+		// SPECULAR
+		Vect reflect;
+		VectSub(light_list[i]->P, inter->P, L);
+		VectUnit(L);
+
+		VectNegate(L, L);
+		VectAddS(VectDotProd(inter->N, L)*-2.0f, inter->N, L, reflect);
+
+		VectUnit(ray->dir);
+		VectUnit(reflect);
+
+		double dotProd = VectDotProd(ray->dir, reflect);
+		double cosin_spec = 1.0f;
+
+		if (dotProd <= 0.0f)
+		{
+			cosin_spec = 0.0f;
+		}
+
+		else
+		{
+			for (int i = 0; i < inter->surf->spec_exp; i++)
+				cosin_spec *= dotProd;
+		}
+
+		color[R] += 
+			inter->surf->amb[R] * light_list[i]->amb[R] + 
+			inter->surf->diff[R] * light_list[i]->diff[R] * cosin_diff + 
+			inter->surf->spec[R] * light_list[i]->spec[R] * cosin_spec;
+		
+		color[G] += 
+			inter->surf->amb[G] * light_list[i]->amb[G] +
+			inter->surf->diff[G] * light_list[i]->diff[G] * cosin_diff +
+			inter->surf->spec[G] * light_list[i]->spec[G] * cosin_spec;
+		
+		color[B] += 
+			inter->surf->amb[B] * light_list[i]->amb[B] +
+			inter->surf->diff[B] * light_list[i]->diff[B] * cosin_diff +
+			inter->surf->spec[B] * light_list[i]->spec[B] * cosin_spec;
+	}
+
+	VectClamp(color, 0, 1);
 }
 
 //----------------------------------------------------------------------------
@@ -247,7 +312,8 @@ void idle()
 			else
 				dptImage[i] = 0.0f;
 
-		}
+		} 
+
 		
 		write_DPT("depthInfo.bin", dptImage, ray_cam->im->w, ray_cam->im->h);
 
@@ -268,11 +334,11 @@ void display(void)
 	glPixelZoom(1, -1);
 	glRasterPos2i(0, ray_cam->im->h);
 
-	//// display color image
-	//glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_RGBA, GL_FLOAT, ray_cam->im->data);
+	// display color image
+	glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_RGBA, GL_FLOAT, ray_cam->im->data);
 	
 	// display depth image
-	glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_LUMINANCE, GL_FLOAT, dptImage);
+	//glDrawPixels(ray_cam->im->w, ray_cam->im->h, GL_LUMINANCE, GL_FLOAT, dptImage);
 
 	glFlush ();
 }
