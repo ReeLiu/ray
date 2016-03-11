@@ -329,13 +329,13 @@ Intersection *intersect_ray_triangle(Ray *ray, Vect V0, Vect V1, Vect V2)
 
 	VectSub(V1, V0, u);
 	VectSub(V2, V0, v);
-	VectCross(u, v, n);  
+	VectCross(u, v, n);
 	if (n[X] == 0 && n[Y] == 0 && n[Z] == 0)            // triangle is degenerate; do not deal with this case
-		return NULL;               
+		return NULL;
 
 	VectSub(ray->orig, V0, w0);
-	a = -VectDotProd(n,w0);
-	b = VectDotProd(n,ray->dir);
+	a = -VectDotProd(n, w0);
+	b = VectDotProd(n, ray->dir);
 
 	if (fabs(b) < SMALL_NUM) {     // ray is parallel to triangle plane
 		if (a == 0)                  // case 1: ray lies in triangle plane
@@ -349,19 +349,19 @@ Intersection *intersect_ray_triangle(Ray *ray, Vect V0, Vect V1, Vect V2)
 	if (t < rayeps)                   // triangle is behind/too close to ray => no intersect
 		return NULL;                 // for a segment, also test if (t > 1.0) => no intersect
 
-	// intersect point of ray and plane
+									 // intersect point of ray and plane
 
-	VectAddS(t, ray->dir, ray->orig, I);        
+	VectAddS(t, ray->dir, ray->orig, I);
 
 	// is I inside T?
 
 	float    uu, uv, vv, wu, wv, D;
-	uu = VectDotProd(u,u);
-	uv = VectDotProd(u,v);
-	vv = VectDotProd(v,v);
+	uu = VectDotProd(u, u);
+	uv = VectDotProd(u, v);
+	vv = VectDotProd(v, v);
 	VectSub(I, V0, w);
-	wu = VectDotProd(w,u);
-	wv = VectDotProd(w,v);
+	wu = VectDotProd(w, u);
+	wv = VectDotProd(w, v);
 	D = uv * uv - uu * vv;
 
 	// get and test parametric (i.e., barycentric) coords
@@ -378,6 +378,47 @@ Intersection *intersect_ray_triangle(Ray *ray, Vect V0, Vect V1, Vect V2)
 	inter->t = t;
 	VectCopy(inter->P, I);
 	return inter;                      // I is in T
+
+	//Vect e1, e2, T, P, Q;
+	//double det, t, u, v;
+	//VectSub(V1, V0, e1);
+	//VectSub(V2, V0, e2);
+	//VectSub(ray->orig, V0, T);
+	//VectCross(ray->dir, e2, P);
+
+	//det = VectDotProd(P, e1);
+	//if (det < 0)
+	//{
+	//	VectNegate(T, T);
+	//	det = -det;
+	//}
+
+	//// ray parallel to triangle plane
+	//if (det < 0.0001f)
+	//	return NULL;
+
+	//u = VectDotProd(P, T);
+	//if (u < 0.0f || u > det)
+	//	return NULL;
+
+	//VectCross(T, e1, Q);
+	//
+	//v = VectDotProd(Q, ray->dir);
+	//if (v < 0.0f || v + u > det)
+	//	return NULL;
+
+	//t = VectDotProd(Q, e2);
+
+	//float detInv = 1.0f / det;
+	//t *= detInv;
+	//u *= detInv;
+	//v *= detInv;
+
+	//Intersection* inter = make_intersection();
+	//VectAddS(t, ray->dir, ray->orig, inter->P);
+	//inter->t = t;
+
+	//return inter;
 }
 
 //----------------------------------------------------------------------------
@@ -698,7 +739,6 @@ void parse_scene_file(char *filename, Camera *cam)
 
 	fscanf(fp, "image %i %i\n", &w, &h);
 	cam->im = make_image(w, h);
-
 	// objects and lights
 
 	model_list.clear();
@@ -890,6 +930,21 @@ void write_PPM(char *filename, Image *im)
 			(int) my_round(255*im->data[t+2]));
 
 	// finish up
+
+	fclose(fp);
+}
+
+void write_DPT(char* filename, GLfloat* dptInfo, int w, int h)
+{
+	FILE* fp = fopen(filename, "w");
+
+	fprintf(fp, "w: %i, h: %i", w, h);
+	for (int j = 0; j < h; j++)
+	{
+		fprintf(fp, "\n");
+		for (int i = 0; i < w; i++)
+			fprintf(fp, "%-f\t", dptInfo[i+j*w]);
+	}
 
 	fclose(fp);
 }
