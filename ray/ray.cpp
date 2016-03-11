@@ -71,8 +71,8 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 
 		//shade_ray_false_color_normal(nearest_inter, color);
 		//    shade_ray_intersection_mask(color);  
-		//shade_ray_diffuse(ray, nearest_inter, color);
-		shade_ray_recursive(level, weight, ray, nearest_inter, color);
+		shade_ray_diffuse(ray, nearest_inter, color);
+		//shade_ray_recursive(level, weight, ray, nearest_inter, color);
 
 		// record depth information
 		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
@@ -157,6 +157,7 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 		VectSub(light_list[i]->P, inter->P, lighting);
 		VectUnit(lighting);
 
+		VectUnit(inter->N);
 		double cosin = VectDotProd(inter->N, lighting);
 		if (cosin <= 0.0f)
 		{
@@ -201,7 +202,6 @@ void shade_ray_local(Ray *ray, Intersection *inter, Vect color)
 		VectNegate(L, L);
 		VectAddS(VectDotProd(inter->N, L)*-2.0f, inter->N, L, reflect);
 
-		VectUnit(ray->dir);
 		VectUnit(reflect);
 
 		double dotProd = VectDotProd(ray->dir, reflect);
@@ -311,9 +311,7 @@ void idle()
 
 			else
 				dptImage[i] = 0.0f;
-
 		} 
-
 		
 		write_DPT("depthInfo.bin", dptImage, ray_cam->im->w, ray_cam->im->h);
 
