@@ -71,8 +71,8 @@ void trace_ray(int level, double weight, Ray *ray, Vect color)
 
 		//shade_ray_false_color_normal(nearest_inter, color);
 		//    shade_ray_intersection_mask(color);  
-		shade_ray_diffuse(ray, nearest_inter, color);
-		//shade_ray_recursive(level, weight, ray, nearest_inter, color);
+		//shade_ray_diffuse(ray, nearest_inter, color);
+		shade_ray_recursive(level, weight, ray, nearest_inter, color);
 
 		// record depth information
 		dptImage[image_i + image_j*ray_cam->im->w] = nearest_inter->t;
@@ -157,11 +157,9 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 		VectSub(light_list[i]->P, inter->P, lighting);
 		VectUnit(lighting);
 
-		VectUnit(inter->N);
 		double cosin = VectDotProd(inter->N, lighting);
 		if (cosin <= 0.0f)
 		{
-			cosin = 0.0f;
 			continue;
 		}
 
@@ -174,6 +172,41 @@ void shade_ray_diffuse(Ray *ray, Intersection *inter, Vect color)
 	VectClamp(color, 0, 1);
 }
 
+bool test_intersection(Vect p, Vect o, Vect dir)
+{
+	Ray* r = make_ray();
+	VectCopy(r->dir, dir);
+	VectAddS(0.001f, dir, p, r->orig);
+
+	Vect tmp;
+	VectSub(o, r->orig, tmp);
+
+	double maxDepth = VectMag(tmp);
+	
+	for (int i = 0; i < sphere_list.size(); i++)
+	{
+		Intersection* inter = intersect_ray_sphere(r, sphere_list[i]);
+		if (inter != NULL && inter->t < maxDepth)
+		{
+			free(r);
+			return true;
+		}
+	}
+
+	for (int i = 0; i < model_list.size(); i++)
+	{
+		Intersection* inter = intersect_ray_glm_object(r, model_list[i]);
+		if (inter != NULL && inter->t < maxDepth)
+		{
+			free(r);
+			return true;
+		}
+	}
+
+	free(r);
+	return false;
+}
+
 //----------------------------------------------------------------------------
 
 // same as shade_ray_diffuse(), but add specular L + shadow rays (i.e., full Phong illumination model)
@@ -183,55 +216,54 @@ void shade_ray_local(Ray *ray, Intersection *inter, Vect color)
 	// FILL IN CODE 
 	for (int i = 0; i < light_list.size(); i++)
 	{
-		// DIFFUSE
 		Vect L;
 		VectSub(light_list[i]->P, inter->P, L);
 		VectUnit(L);
 
+		// AMBIENT
+		color[R] += inter->surf->amb[R] * light_list[i]->amb[R];
+		color[G] += inter->surf->amb[G] * light_list[i]->amb[G];
+		color[B] += inter->surf->amb[B] * light_list[i]->amb[B];
+
+		// SHADOW
+		if (test_intersection(inter->P, light_list[i]->P, L)) {
+			continue;
+		}
+		
+		// DIFFUSE
 		double cosin_diff = VectDotProd(inter->N, L);
-		if (cosin_diff <= 0.0f)
+		if (cosin_diff > SMALL_NUM)
 		{
-			cosin_diff = 0.0f;
+			color[R] += inter->surf->diff[R] * light_list[i]->diff[R] * cosin_diff;
+			color[G] += inter->surf->diff[G] * light_list[i]->diff[G] * cosin_diff;
+			color[B] += inter->surf->diff[B] * light_list[i]->diff[B] * cosin_diff;
 		}
 
-		// SPECULAR
-		Vect reflect;
-		VectSub(light_list[i]->P, inter->P, L);
-		VectUnit(L);
+		//// SPECULAR - COOK
+		//Vect half;
+		//VectSub(L, ray->dir, half);
+		//VectUnit(half);
 
+		//double dotProd = VectDotProd(inter->N, half);
+
+		// SPECULAR - PHONE
+		if (VectDotProd(inter->N, L) < SMALL_NUM)
+			continue;
+
+		Vect RFLT;
 		VectNegate(L, L);
-		VectAddS(VectDotProd(inter->N, L)*-2.0f, inter->N, L, reflect);
+		VectAddS(-2.0f * VectDotProd(inter->N, L), inter->N, L, RFLT);
 
-		VectUnit(reflect);
+		double dotProd = VectDotProd(RFLT, ray->dir);
 
-		double dotProd = VectDotProd(ray->dir, reflect);
-		double cosin_spec = 1.0f;
-
-		if (dotProd <= 0.0f)
+		if (dotProd > SMALL_NUM)
 		{
-			cosin_spec = 0.0f;
-		}
+			double cosin_spec = pow(dotProd, inter->surf->spec_exp);
 
-		else
-		{
-			for (int i = 0; i < inter->surf->spec_exp; i++)
-				cosin_spec *= dotProd;
+			color[R] += inter->surf->spec[R] * light_list[i]->spec[R] * cosin_spec;
+			color[G] += inter->surf->spec[G] * light_list[i]->spec[G] * cosin_spec;
+			color[B] += inter->surf->spec[B] * light_list[i]->spec[B] * cosin_spec;
 		}
-
-		color[R] += 
-			inter->surf->amb[R] * light_list[i]->amb[R] + 
-			inter->surf->diff[R] * light_list[i]->diff[R] * cosin_diff + 
-			inter->surf->spec[R] * light_list[i]->spec[R] * cosin_spec;
-		
-		color[G] += 
-			inter->surf->amb[G] * light_list[i]->amb[G] +
-			inter->surf->diff[G] * light_list[i]->diff[G] * cosin_diff +
-			inter->surf->spec[G] * light_list[i]->spec[G] * cosin_spec;
-		
-		color[B] += 
-			inter->surf->amb[B] * light_list[i]->amb[B] +
-			inter->surf->diff[B] * light_list[i]->diff[B] * cosin_diff +
-			inter->surf->spec[B] * light_list[i]->spec[B] * cosin_spec;
 	}
 
 	VectClamp(color, 0, 1);

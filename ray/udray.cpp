@@ -311,114 +311,112 @@ void update_nearest_intersection(Intersection **inter, Intersection **nearest_in
 // liable for any real or imagined damage resulting from its use.
 // Users of this code must verify correctness for their application.
 
-#define SMALL_NUM  0.00000001 // anything that avoids division overflow
-
 //    Input:  a ray R, and a triangle T
 //    Return: intersection information (when it exists); NULL otherwise
 
 Intersection *intersect_ray_triangle(Ray *ray, Vect V0, Vect V1, Vect V2)
 {
-	Vect    u, v, n;        // triangle vectors
-	Vect    w0, w;          // ray vectors
-	float   a, b;           // params to calc ray-plane intersect
-	float t;
-	Vect I;
-	Intersection *inter;
+	//Vect    u, v, n;        // triangle vectors
+	//Vect    w0, w;          // ray vectors
+	//float   a, b;           // params to calc ray-plane intersect
+	//float t;
+	//Vect I;
+	//Intersection *inter;
 
-	// get triangle edge vectors and plane normal
+	//// get triangle edge vectors and plane normal
 
-	VectSub(V1, V0, u);
-	VectSub(V2, V0, v);
-	VectCross(u, v, n);
-	if (n[X] == 0 && n[Y] == 0 && n[Z] == 0)            // triangle is degenerate; do not deal with this case
-		return NULL;
+	//VectSub(V1, V0, u);
+	//VectSub(V2, V0, v);
+	//VectCross(u, v, n);
+	//if (n[X] == 0 && n[Y] == 0 && n[Z] == 0)            // triangle is degenerate; do not deal with this case
+	//	return NULL;
 
-	VectSub(ray->orig, V0, w0);
-	a = -VectDotProd(n, w0);
-	b = VectDotProd(n, ray->dir);
+	//VectSub(ray->orig, V0, w0);
+	//a = -VectDotProd(n, w0);
+	//b = VectDotProd(n, ray->dir);
 
-	if (fabs(b) < SMALL_NUM) {     // ray is parallel to triangle plane
-		if (a == 0)                  // case 1: ray lies in triangle plane
-			return NULL;
-		else return NULL;               // case 2: ray disjoint from plane
-	}
-
-	// get intersect point of ray with triangle plane
-
-	t = a / b;
-	if (t < rayeps)                   // triangle is behind/too close to ray => no intersect
-		return NULL;                 // for a segment, also test if (t > 1.0) => no intersect
-
-									 // intersect point of ray and plane
-
-	VectAddS(t, ray->dir, ray->orig, I);
-
-	// is I inside T?
-
-	float    uu, uv, vv, wu, wv, D;
-	uu = VectDotProd(u, u);
-	uv = VectDotProd(u, v);
-	vv = VectDotProd(v, v);
-	VectSub(I, V0, w);
-	wu = VectDotProd(w, u);
-	wv = VectDotProd(w, v);
-	D = uv * uv - uu * vv;
-
-	// get and test parametric (i.e., barycentric) coords
-
-	float p, q;  // were s, t in original code
-	p = (uv * wv - vv * wu) / D;
-	if (p < 0.0 || p > 1.0)        // I is outside T
-		return NULL;
-	q = (uv * wu - uu * wv) / D;
-	if (q < 0.0 || (p + q) > 1.0)  // I is outside T
-		return NULL;
-
-	inter = make_intersection();
-	inter->t = t;
-	VectCopy(inter->P, I);
-	return inter;                      // I is in T
-
-	//Vect e1, e2, T, P, Q;
-	//double det, t, u, v;
-	//VectSub(V1, V0, e1);
-	//VectSub(V2, V0, e2);
-	//VectSub(ray->orig, V0, T);
-	//VectCross(ray->dir, e2, P);
-
-	//det = VectDotProd(P, e1);
-	//if (det < 0)
-	//{
-	//	VectNegate(T, T);
-	//	det = -det;
+	//if (fabs(b) < SMALL_NUM) {     // ray is parallel to triangle plane
+	//	if (a == 0)                  // case 1: ray lies in triangle plane
+	//		return NULL;
+	//	else return NULL;               // case 2: ray disjoint from plane
 	//}
 
-	//// ray parallel to triangle plane
-	//if (det < 0.0001f)
+	//// get intersect point of ray with triangle plane
+
+	//t = a / b;
+	//if (t < rayeps)                   // triangle is behind/too close to ray => no intersect
+	//	return NULL;                 // for a segment, also test if (t > 1.0) => no intersect
+
+	//								 // intersect point of ray and plane
+
+	//VectAddS(t, ray->dir, ray->orig, I);
+
+	//// is I inside T?
+
+	//float    uu, uv, vv, wu, wv, D;
+	//uu = VectDotProd(u, u);
+	//uv = VectDotProd(u, v);
+	//vv = VectDotProd(v, v);
+	//VectSub(I, V0, w);
+	//wu = VectDotProd(w, u);
+	//wv = VectDotProd(w, v);
+	//D = uv * uv - uu * vv;
+
+	//// get and test parametric (i.e., barycentric) coords
+
+	//float p, q;  // were s, t in original code
+	//p = (uv * wv - vv * wu) / D;
+	//if (p < 0.0 || p > 1.0)        // I is outside T
+	//	return NULL;
+	//q = (uv * wu - uu * wv) / D;
+	//if (q < 0.0 || (p + q) > 1.0)  // I is outside T
 	//	return NULL;
 
-	//u = VectDotProd(P, T);
-	//if (u < 0.0f || u > det)
-	//	return NULL;
-
-	//VectCross(T, e1, Q);
-	//
-	//v = VectDotProd(Q, ray->dir);
-	//if (v < 0.0f || v + u > det)
-	//	return NULL;
-
-	//t = VectDotProd(Q, e2);
-
-	//float detInv = 1.0f / det;
-	//t *= detInv;
-	//u *= detInv;
-	//v *= detInv;
-
-	//Intersection* inter = make_intersection();
-	//VectAddS(t, ray->dir, ray->orig, inter->P);
+	//inter = make_intersection();
 	//inter->t = t;
+	//VectCopy(inter->P, I);
+	//return inter;                      // I is in T
 
-	//return inter;
+	Vect e1, e2, T, P, Q;
+	double det, t, u1, v1;
+	VectSub(V1, V0, e1);
+	VectSub(V2, V0, e2);
+	VectSub(ray->orig, V0, T);
+	VectCross(ray->dir, e2, P);
+
+	det = VectDotProd(P, e1);
+	if (det < 0.0f)
+	{
+		VectNegate(T, T);
+		det = -det;
+	}
+
+	// ray parallel to triangle plane
+	if (det < SMALL_NUM)
+		return NULL;
+
+	u1 = VectDotProd(P, T);
+	if (u1 < 0.0f || u1 > det)
+		return NULL;
+
+	VectCross(T, e1, Q);
+	
+	v1 = VectDotProd(Q, ray->dir);
+	if (v1 < SMALL_NUM || v1 + u1 > det)
+		return NULL;
+
+	t = VectDotProd(Q, e2);
+
+	if (t < 0.0f)
+		return NULL;
+
+	t /= det;
+
+	Intersection* inter = make_intersection();
+	VectAddS(t, ray->dir, ray->orig, inter->P);
+	inter->t = t;
+
+	return inter;
 }
 
 //----------------------------------------------------------------------------
@@ -867,6 +865,7 @@ void parse_scene_file(char *filename, Camera *cam)
 
 			// move to camera coordinates
 
+			P[W] = 0.0f;
 			TransformVect(cam->W2C, P, L->P);
 
 			// add to list

@@ -53,7 +53,8 @@ using namespace std;
 #define NEAR   4
 #define FAR    5
 
-#define MAXDEPTH 10000
+#define MAXDEPTH 10000				// infinite distance
+#define SMALL_NUM  0.0000000001		// anything that avoids division overflow
 
 //----------------------------------------------------------------------------
 // Type and struct definitions
