@@ -20,7 +20,7 @@
 
 using namespace std;
 
-#include <glut.h>
+#include <gl/glut.h>
 
 #include "glm.h"
 
@@ -52,6 +52,9 @@ using namespace std;
 #define TOP    3
 #define NEAR   4
 #define FAR    5
+
+#define MAXDEPTH 10000				// infinite distance
+#define SMALL_NUM  0.0000000001		// anything that avoids division overflow
 
 //----------------------------------------------------------------------------
 // Type and struct definitions
@@ -212,6 +215,7 @@ void VectClamp(Vect, double, double);
 
 void draw_point(int, int, Vect, Image *);
 void write_PPM(char *, Image *);
+void write_DPT(char *, GLfloat *, int, int);
 
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------

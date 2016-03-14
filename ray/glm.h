@@ -20,7 +20,7 @@ Modified by Christopher Rasmussen to include index indicating position in global
 #if defined(__APPLE__) || defined(MACOSX)
 #include <GLUT/glut.h>
 #else
-#include <glut.h>
+#include <gl/glut.h>
 #endif
 
 #ifndef M_PI
